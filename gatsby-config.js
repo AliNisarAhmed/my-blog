@@ -3,7 +3,7 @@ module.exports = {
     title: `Ali's blog`,
     author: `Ali Nisar Ahmed`,
     description: `A blog on all the things I think & do`,
-    siteUrl: `https://gatsby-starter-blog-demo.netlify.com/`,
+    siteUrl: `https://alinisarahmed.live/`,
     social: {
       twitter: `alinisarahmed`,
     },
@@ -27,10 +27,12 @@ module.exports = {
       resolve: `gatsby-transformer-remark`,
       options: {
         plugins: [
+          `gatsby-remark-relative-images`,
           {
             resolve: `gatsby-remark-images`,
             options: {
               maxWidth: 590,
+              linksImagesToOriginal: false,
             },
           },
           {
@@ -39,7 +41,12 @@ module.exports = {
               wrapperStyle: `margin-bottom: 1.0725rem`,
             },
           },
-          `gatsby-remark-prismjs`,
+          {
+            resolve: `gatsby-remark-prismjs`,
+            options: {
+              inlineCodeMarker: '> '
+            }
+          },
           `gatsby-remark-copy-linked-files`,
           `gatsby-remark-smartypants`,
         ],

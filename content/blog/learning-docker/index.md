@@ -1,71 +1,143 @@
 ---
-title: Learning Docker and Cycle.io
+title: Introduction to Docker and Cycle for total beginners
 date: 2019-05-04
 ---
 
-# Learning Docker and Cycle
-
-Docker has taken the world over by a storm (or at least, taken over my world by a storm, the rest of the world realized its importance a while back). But what exactly is Docker? I recently got a chance to learn Docker on my own, and this post documents my experience on what I learned, and aims to be a bird's eye view on Container technology for those who do not have the faintest idea what that is (just like me, when I started). This post will not teach you how to make a Docker container (there are far better resources out there for that, made by far more knowledgable people, I list some of those at the end), but it will teach you (I hope) what Docker is, and will act as a building block for you to learn further. 
-
+Docker has taken the world over by storm (or at least, taken over my world, the rest of the world realized its importance a while back). But what exactly is Docker? I recently got a chance to learn Docker on my own. This post documents my experience on what I learned and is bird's eye view on the Container technology for those who do not have the faintest idea of what that is (just like me, when I started). This post aims to give readers an idea of what Docker is (I hope), and will act as a building block to learn further. We will also learn about container orchestration systems which manage containers on the server, and explore one such system, Cycle. 
 
 ## What is Docker
 
-Docker is a software, that helps us run other softwares by making Images and Containers. Images and Containers are a self contained unit of software, with all it's dependencies included. Go have a look at the Docker's Logo, it is a whale carrying shipping containers, and that is exactly how Docker works. It transforms all your project files, folders and other stuff into these "shipping containers", each self-sufficient.
+Docker is an open-source software that helps us run other software by enfolding and bundling the whole thing in **Containers**. Containers are self-contained units of software, with all their dependencies included within the package. If you take a look at Docker's [logo](https://blog.docker.com/2013/06/announcing-new-docker-style/), it is a whale carrying shipping containers, and that perfectly depicts how Docker works. It transforms all your project files, folders, and other stuff into a "shipping container", a self-sufficient unit of software carrying with it everything that it needs to run. An app may be divided into multiple such containers, and they can all run in tandem on a server, choreographed by a container orchestration system.
 
-So it is sort of like a plug-and-play system, you just download a "box", plug it into Docker, and off it runs, without a care in the world what operating system your computer has, or whether any dependency is installed on your system at all.
+![Docker Logo](./docker.png)
 
-Lets carry this analogy further, lets just say that you imported your stuff in a shipping container, and now you have to place the container in your backyard. The problem is, that container is either way too bif or way too small for your home. What docker does is it makes those containers standardized, so regardless of how large or small your backyard is, all shipping containers "fit" there.
+So it is sort of like a plug-and-play system, we just download a "box", plug it into Docker, and off it runs, without a care in the world what operating system our computer has, or whether any dependency (or variations of same dependency) is installed on our system at all. Similarly, we can pack our next app in a container, ship it to a friend, and all we need to worry about whether our friend will be able to run the app or not is whether they have Docker itself installed on their system. Whatever the operating system might be, Windows, Mac or Linux, a Docker container can run inside of it without any hiccups, even if that container was assembled in either of Windows, Linux or Mac. All that is needed is the Docker software itself installed on our systems.
 
-One thing that may seem difficult at first is a plethora of docker commands, but once you start building a few containers, they become second nature. Most useful and oft-used commands are `docker build ...` `docker run ...`, `docker ps` `docker image ps` `docker image ls` etc...
+Technically, Docker does not make Containers out of our projects directly, it makes **Images**, and as the name might suggest, Images are what Docker **Containers** come out of. You download an Image, make a Container out of it, and run your app as that container. There are thousands of Images on [Docker Hub](https://hub.docker.com/), a central repository for docker Images. 
 
-Another important bit is the Dockerfile, the file that the Docker software uses to create Images. A sample Docker file might look like this
+## What was there before Docker?
+
+The standard has been to use Virtual Machines (a computer inside a computer, with an operating system of its own) to run applications. Virtual Machines provide isolation for the software run inside them, at the cost of computational power and hardware resources required to run a full-blown operating system inside another. A few Virtual Machines running on a system is a huge resource hog for that system. Docker takes a different approach, they create virtual isolation for our apps, and, unlike VMs, provides an app with just enough resources it needs to run in isolation. The figure below, taken from the official Docker [guide](https://docs.docker.com/get-started/), perfectly sums all this up.
+
+![Docker vs Virtual Machines](./image1.png)
+
+## How to Dockerize a project
+
+Building an app using Docker can be summarized as below
+
+1. Create a `Dockerfile` in the root of the project
+2. Create Image(s) using `docker build ...`
+3. Run Containers from those Images using `docker run ...`
+4. Combine those containers in an app, and run them together through a `docker-compose.yml` file.
+
+Let's explore these steps further.
+
+Docker Images are built by giving the Docker software various instructions in a file in the root of our project, called `Dockerfile`. A sample Docker file might look like this
 
 ```
+FROM node:11.14 as builder
+WORKDIR /app
+COPY package.json /app
+RUN npm install
+COPY . /app
+RUN npm run build
 
+FROM node:11.14
+COPY /.env ./ 
+COPY --from=builder /app/dist/ ./dist
+COPY --from=builder /app/server/ ./server
+COPY /packageJson_server/package.json ./
+RUN npm install
+ENV SECRET="abcdefg"
+EXPOSE 8080
+CMD [ "npm", "run", "serve" ]
 ```
 
-Technically, Docker does not make Containers out of your project directly, it makes "Images", and yeah as the name suggests, Images are what Docker containers come out of. You download an Image, make a Container out of it, and run your app as that container. There are hundreds, maybe thousands of Images on Docker Hub, a central repository for docker Images. It usually takes some time the first time you make an Image, but after that, Docker is smart enough to cache your build, and on next build command read your dependency list from your manifest files, and if unchanged, just used the cached version. 
+The commands in a `Dockerfile` are just instructions to the Docker software on what it needs to do inside a project folder (many of them are self-explanatory, in fact), and they come into play once Docker is instructed, from the command-line, to start building an Image out of our project. These command-line instructions to build and run Images are written like `docker build --tag=note-taking-app .`, for example. There are a plethora of such commands, which may seem daunting at first, but once we start building a few containers, they become second nature. Most useful and oft-used commands are `docker build ...` `docker run ...`, `docker ps` `docker image ps` `docker image ls`, etc. 
 
-WHat this means in terms of software is that whatever your operating system be, a docker container can run inside of it, even if that container was assembled in Windows, Linux or Mac. All we need is Docker software itself installed on our systems.
+When Docker sees a `Dockerfile`, it starts executing the commands one by one. It usually takes some time the first time an Image is generated from a `Dockerfile`, but after that, Docker is smart enough to cache the build, and on subsequent builds it reads the dependency list from the manifest files (`package.json` or `requirements.txt`), and if unchanged, just uses the cached version of those dependencies. 
 
-What does this achieve you ask? Why containerize my applications? Containerization has many benefits.
-<!-- 
-Containers offer a packaging mechanism in which applications can be abstracted from the environment in which they actually run. This decoupling allows container-based applications to be deployed easily and consistently, regardless of the nature of target environment. This gives developers the ability to create predictable environments that are isolated from rest of the applications and can be run anywhere.
+Another feature is the **multi-stage builds**, in which *artifacts* from the first build (folders that will not be used in production, like `node_modules` folder) are discarded in the next stage of the build, thus keeping the builds lean and clean. So, in the `Dockerfile` pasted above, I first build the front-end of the application (`npm run build`), and then in the next stage, only copy over the build (`dist/`) folder, thus leaving the front-end `node_modules` behind, which will not be included in the final build. Thus the container becomes as lightweight as it can possibly be, consisting of only those files needed at runtime.
 
-Docker is a tool that is designed to benefit both developers and system administrators, making it a part of many DevOps (developers + operations) toolchains. For developers, it means that they can focus on writing code without worrying about the system that it will ultimately be running on. It also allows them to get a head start by using one of thousands of programs already designed to run in a Docker container as a part of their application. For operations staff, Docker gives flexibility and potentially reduces the number of systems needed because of its small footprint and lower overhead. -->
+Once an Image is built, we can make as many containers out of them as we please, by running the command `docker run (Name/ID of Image) (params)` (we can provide various parameters, which are not relevant to this post).
 
-  - It helps you avoid dependency issues such as clashes between dependencies, dependency variations among operating systems, one program changing the version of a dependency, which renders another program useless, and stuff like that.
-  - It takes the "Module" model of software development to the level of app deployment, you can use Images that other people have used and integrate them seamlessly into your own apps, without any worry.
-  - One of the biggest advantages to a Docker-based architecture is actually standardization. Docker provides repeatable development, build, test, and production environments. Standardizing service infrastructure across the entire pipeline allows every team member to work in a production parity environment. 
-  - Docker containers allow you to commit changes to your Docker images and version control them. For example, if you perform a component upgrade that breaks your whole environment, it is very easy to rollback to a previous version of your Docker image. This whole process can be tested in a few minutes.
-  - Eliminate the “it works on my machine” problem once and for all. One of the benefits that the entire team will appreciate is parity. Parity, in terms of Docker, means that your images run the same no matter which server or whose laptop they are running on.
-  - Docker manages to reduce deployment to seconds. This is due to the fact that it creates a container for every process and does not boot an OS.
-  - Docker ensures your applications and resources are isolated and segregated. Docker makes sure each container has its own resources that are isolated from other containers. You can have various containers for separate applications running completely different stacks. Docker helps you ensure clean app removal since each application runs on its own container. If you no longer need an application, you can simply delete its container. It won’t leave any temporary or configuration files on your host OS. 
+Multiple containers can be run simultaneously using a `docker-compose.yml` file. Certain conditions may be specified in the `docker-compose.yml` file, conditions like which container should start first, how containers communicate to each other and to the outside world, what folders (volumes) those containers are allowed to access, etc. A sample `docker-compose.yml` file looks like this:
+
+```
+version: '3'
+services: 
+  db:
+    image: 'alinisarahmed/note-app:my-mongo'
+    ports:
+      - "27017:27017"
+    volumes:
+      - /data/db:/data/db
+  nodejs:
+    build: .
+    image: 'alinisarahmed/note-app:v2'
+    command: npm run serve
+    ports: 
+      - "3000:3000"
+    depends_on:
+      - db
+    links:
+      - db
+    environment: 
+      - MONGO_HOSTNAME=mongodb://db:27017/test-db
+      - PORT=3000
+```
+
+
+## Advantages of Docker
+
+So, What's the point of doing all this "Containerization", you ask? Running applications as containers have many benefits, as summarized below:
+
+  - Containerization provides an abstraction from the environments in which apps are made and run. This decoupling engenders consistency, standardization, and parity, and allows developers to create predictable environments for their apps to run anywhere. Developers can focus on the code without worrying about the system that it will ultimately be running on.
+  - It helps us avoid dependency issues such as clashes between dependencies, dependency variations between systems, or situations like one program altering the version of a dependency, which renders another program useless.
+  - It takes the "Module" model of software development to the level of app deployment, we can utilize Images that other people have made and integrate them seamlessly into your own apps, without any worry.
+  - Docker manages to reduce deployment to seconds (provided you use a good container orchestrator, more on this later). This is due to the fact that it creates a container for every process and does not boot an OS.
+  - Docker enables easy version control of the production builds, making it easy to rollback to a previous working image of the production build.
+  - Docker ensures apps can be removed cleanly from a system, since, once an app container is deleted, all its associated dependencies are gone from our system as well without leaving any temporary or configuration files on the host OS. 
   - Docker also ensures that each application only uses resources that have been assigned to them.
-  - The last of these benefits of using docker is security. From a security point of view, Docker ensures that applications that are running on containers are completely segregated and isolated from each other, granting you complete control over traffic flow and management. No Docker container can look into processes running inside another container.
+  - Last, but not the least, another benefit of using Docker is security. From a security point of view, Docker ensures that applications that are running on containers are completely segregated. No Docker container can look into processes running inside another container.
 
-## Deployment
+## Deployment, Container Orchestration, and Cycle
 
-So, you have containerized your applications, how do you deploy it?
+So, we have our app containerized, how do we deploy it?
 
-One way to deploy your containers is to deploy them on a cloud server (a computer running on, well, cloud), monitered by a Container orchestration system. One of the best known container orchestration system is Kubernetes, another is Cycle, the one I decided to use.
+One way to deploy containers is to deploy them on a cloud server (a computer running on, well, cloud), monitored by a Container orchestration system. One of the best-known container orchestration systems is [Kubernetes](https://kubernetes.io/), another is [Cycle](https://cycle.io). We will not be comparing these systems here, but the ease with which I was able to set up a server and deploy my app (consisting of two containers, one for MongoDB and another for Node/Express JSON API and a React/TypeScript Front-end), without knowing jack about orchestrators, clouds, servers, and other dev-ops paraphernalia is a testament to Cycle's claim that a developer can now do what used to take an entire dev-ops team (heck I'm not even a professional developer yet!). You have to try it to believe it, and if you do want to try it, read on.
 
-Cycle claims to be a container orchestration system that promises to deliver, easing the process of contatiner management for you by letting you focus solely on the code, and not on infrastructure. So, it offers you a dashboard, from where you can easily control how your containers are deployed. It currently partners with Vultr, a cloud service provider, a company that hosts computers for you on which host your application. Signing up and setting up a server with Vultr was a breeze, and same was the case for Cycle. Mind you, both these services are not free, but, Vultr provides free credit for acts like following them on twitter, and Cycle provides $25 credits for the first month. That is enough bang to try out these services.
+Cycle claims to be a container orchestration system that promises to deliver, easing the process of container management for us by letting us focus solely on the code, and not on infrastructure. User the hood, CycleOS utilizes a runtime which implements the [**Open Container Initiative**](https://www.opencontainers.org/) spec, allowing Cycle to support a variety of container technologies. Cycle offers us a **GUI Dashboard**, from where one can easily control how the containers are grouped and deployed. It currently partners with Vultr and Packet, both cloud service providers, a company that provides **Infrastructure** to host our containers. There is also a feature in pipeline where users will be able to connect their own infrastructure to the Cycle dashboard. If more fine-grained control is needed, Cycle also offers a REST-based API. 
 
-<!-- There are many services who offer cloud servers, Google's Cloud Platform, AWS, Docker itself, Microsoft Azure, iBM Cloud, SalesForce, DropBox etc.
+Signing up and setting up a server with Vultr was a breeze, and the same was the case for Cycle. These services are not free, but, Vultr provides free credit for benign acts like following them on twitter, and Cycle provides $25 credits for the first month. That is enough juice to try out these services and get our feet wet.
 
-So I finished my application, writing a docker-compose file to run them simultaneously (what a feeling it was when my docker-compose finally ran!). Now I wanted to deploy it (For free, preferably). I usually deploy either on netlify, or on Heroku. But I needed cloud service provided.
+Deploying a server, and then deploying an app through Cycle on that server, proved to be a really painless task. Rather than setting up everything from a command-line, we work from inside the GUI Dashboard. This is how the whole process goes: 
 
-I tried a lot of different options, but as a front-end developer who is finding it hard to cope with CSS (darn you CSS, why you so...hard), I found alot of daunting terminolgy, each service provided using their own jumble of words to confuse the heck out of you. So I gave up on a lot of well known options, until I found cycle.io. -->
+1. Select a Cloud service provider, (currently Vultr and Packet, soon AWS will be available too). 
+2. Select a server size (called Infrastructure), based on your needs and budget.
+3. Upload Docker Images from a repository like Docker Hub.
+4. Make **Stacks** out of Docker Images (a stack is a group of images; it is an atomic unit, a bit like Images themselves), specified by a `cycle.json` file, called a stack file (more on this below).
+5. Deploy the Stacks to an **Environment**, which automatically builds a private, encrypted network on which the containers communicate, and starts other services.
 
-Deploying a server, and then deploying my app through Cycle on that server, proved to be a really easy task. You set up a 
-1. cloud service provider, currently (Vultr and Packet, soon AWS will be available too). 
-2. then select a server size (called infrastructure), based on your needs and budget
-3. Upload your Docker Image.
-4. Make Stacks out of your docker Image (a stack is group of images; a snapshot of image builds; atomic units, a bit like Images themselves), specified by a `cycle.json` file, called a stack file (more on this below).
-5. Deploy your Stacks to an Environment, which automatically builds a private, encrypted network on which the containers communicate.
+The only challenging aspect of the whole process for me was the creation of `cycle.json` file, however, previous experience with how `docker-compse.yml` file helped here, since `cycle.json` is basically a JSON version of the `docker-compose.yml` file, with some added options specific to Cycle. In the future, users will be able to generate `cycle.json` file automatically from a `docker-compose.yml` file.
 
-The only challenging aspect of the whole process is the creation of `cycle.json` file, however, if you have experience with how `docker-compse.yml` file works, you can easily figure out how to make the cycle file. In the future, you will be able to generate `cycle.json` file automatically from a `docker-compose.yml` file.
+Once an Environment is created, we are led to the full real-time GUI dashboard, which looks like this
 
-From each Environment's dashboard, one can easily start, stop or restart containers as they wish.
-Each Environment comes with services like VPN (Virtual Private Network), Load balancer, and Discovery (a DNS service) 
+![Cycle GUI Dashboard](./image2.png)
+
+From the dashboard, one can easily start, stop or scale containers as they wish. Have an updated Image for one of your containers? That is just a few clicks away and can be done effortlessly right on the dashboard. Worried that an update might crash your whole app? Cycle has the capability to automatically fall-back to last known working configuration in case of failure. Each Environment also comes with services like VPN (Virtual Private Network), Load Balancer, and Discovery (a DNS service), which are containers themselves. In the future, users will be able to provide their own "services" containers and thus gain more even more control over how their Environment behaves.
+
+Overall, it really was a delightful experience seeing my simple two-container app deployed so quickly. I'm sure that as the number of containers increase and complexity of an application grows, Cycle is THE platform you need to manage the whole system. Read more about this technology on their [documentation](https://docs.cycle.io/) page.
+
+## Further Resources
+
+If you want to learn more about the container technology, following links helped me tremendously.
+
+- [One of the best resources out there](https://docker-curriculum.com/)
+- [The Official Docker guide](https://docs.docker.com/get-started/)
+- [This great medium post which goes into a lot more detail](https://medium.freecodecamp.org/docker-simplified-96639a35ff36)
+- [This awesome 2-part video series on Docker](https://youtu.be/pGYAg7TMmp0)
+- [How to run a React App in a Docker Container](https://dev.to/peterj/run-a-react-app-in-a-docker-container-kjn)
+- [Another great tutorial, from Digital Ocean](https://www.digitalocean.com/community/tutorials/how-to-build-a-node-js-application-with-docker)
+
+---

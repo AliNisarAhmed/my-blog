@@ -31,7 +31,7 @@ function Bio() {
               }}
             />
             <p>
-              Written by <strong>{author}</strong> who is teaching himself web development in particular, and programming in general.
+              By <strong>{author}</strong>. I love JavaScript, TypeScript and Functional programming.
               {` `}
               <a href={`https://twitter.com/${social.twitter}`}>
                 Follow me on Twitter

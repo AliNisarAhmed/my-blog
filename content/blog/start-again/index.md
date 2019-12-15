@@ -9,7 +9,7 @@ The most important being, I found a job here with a great company, and have been
 
 I have been learning a lot on my own as well, with a focus on Functional programming in Haskell and Elm. I also gained more insight into React hooks, TypeScript, git, C#, .Net Core, Microsoft DevOps and SQL server, mostly learning them as I use them more and more in my job.
 
-I could not be more happy in how things have developed over the last 6-9 months. The only regret has been that I have not updated and posted here regularly. The plan now is to write a post every two weeks, and reflect on the things I learnt during and before that time.
+I could not be more happy with how things have developed over the last 6-9 months. The only regret has been that I have not updated and posted here regularly. The plan now is to write a post every two weeks, and reflect on the things I learnt during and before that time.
 
 Things on my plate that I have been learning/working on recently are:
 
@@ -18,7 +18,7 @@ Things on my plate that I have been learning/working on recently are:
   - **Practical Elm** - another book to learn FP, and it is very good at explaining how to organize big projects with Elm.
   - **A type of Programming** - a great book which has given me a fresh perspective on FP and category theory.
   - **Godel, Escher & Bach** - read chapter 1, wow!.
-  - **Clean Code** - assigned by the employer, where we discuss 2 chapters in every Developer meeting.
+  - **Clean Code** - assigned by the employer, where we discuss 2 chapters in every Dev meeting.
   - **Computer Networks - a top down approach** - general Computer Science learning.
   - **C# in Depth**
 - Personal Projects:
